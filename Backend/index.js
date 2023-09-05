@@ -5,29 +5,32 @@ const port= 3000
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
+const cors = require ('cors');
+app.use(cors())
 
 const {validateSala} = require('./schemas/Sala')
+
+const {validateReserva} = require('./schemas/Sala')
 const {validateUser} = require('./schemas/user')
 
+let Reserva = []
+for (i=7;i<=18;i++) {
+    let newreserva = {
+        id: null,
+        name: null,
+        last: null,
+        tiempo: i,
+    }
+    Reserva.push(newreserva);}
+
 let salaEstudio = []
-salaEstudio.push({
-    id: 1,
-    Tiempo: "7",
-    Ubicación: "Edificio C",
-},{
-    id: 2,
-    Tiempo: "9",
-    Ubicación: "Edificio D",
-},{
-    id: 3,
-    Tiempo: "11",
-    Ubicación: "Edificio E",
-},{
-    id: 4,
-    Tiempo: "13",
-    Ubicación: "Edificio F",
-})
+for (i=1;i<=5;i++) {
+    let SalaDescrip = {
+        id: i,
+        place: `Edificio ${i}`,
+        reservado: Reserva
+    }
+    salaEstudio.push(SalaDescrip);}
 
 let user = []
 user.push({
@@ -36,101 +39,92 @@ user.push({
     last: "",
 })
 
-let Reserva = []
-for (i=1;i<=4;i++) {
-    let newreserva = {
-        id: null,
-        name: null,
-        last: null,
-        tiempo: i,
-
-    }
-
-    Reserva.push(newreserva);
-
-  }
 
 
 
 
-app.get('/salaEstudio/:id', (req, res)=>{
-    console.log("params:", req.params)
-    const requestID = req.params.id
-    let requiredSala = null;
-    for (let index = 0; index < salaEstudio.length; index++) {
-        console.log(salaEstudio[index].id === requestID, salaEstudio[index].id, requestID)
-        if(salaEstudio[index].id === requestID){
-            requiredSala = salaEstudio[index];
+    app.get('/', (req, res)=>{
+        res.send("Bienvenidos")
+    })
+
+    app.listen(port, () => {
+        console.log(`Example app listening on port ${port}`)
+    })
+
+
+//************Usar el post para user */
+
+    app.get('/user', (req, res)=>{
+        res.send("user:", user)
+    })
+
+    app.post('/user', (req, res) => {
+
+        const userValidation = validateUser(req.body)
+        console.log("result", userValidation.error)
+
+        if(userValidation.error){
+            return res.status(400).send(
+                {message:JSON.parse(userValidation.error.message)}
+            )
         }
-    }
-    console.log(requiredSala)
-    res.json(requiredSala)
-})
+
+        let newsuser = {
+            id:userValidation.data.id,
+            name:userValidation.data.name,
+            last:userValidation.data.last,
+
+        }
+        user.push(newsuser)
+        res.status(201).send({"message":"Usuario", "users":newsuser})
+    })
 
 
-app.get('/salaEstudio', (req, res)=>{
-    if(req.query.Ubicacion){
-        salaEstudio = salaEstudio.filter(
-            (sala)=>{return sala.Ubicacion == req.query.Ubicacion}
-        )
-    }
-    res.send({"salaEstudio":salaEstudio})
-})
+    app.delete('/user/:id', (req, res)=>{
+        const idToDelete = req.params.id;
+        let indexToDelete = user.findIndex(users=>users.id==idToDelete)
+        let userDeleted = user.splice(indexToDelete, 1)
+        //console.log("user delete: ", userDeleted)
+        res.send("Se eliminó  el usuario con id: " + userDeleted[0].id)
+    })
 
-app.post('/salaEstudio', (req, res) => {
 
-    const SalaValidation = validateSala(req.body)
-    console.log("result", SalaValidation.error)
+/////Salita
 
-    if(SalaValidation.error){
-        return res.status(400).send(
-            {message:JSON.parse(SalaValidation.error.message)}
-        )
-    }
+    app.get('/salaEstudio', (req, res)=>{
+        res.send("salaEstudio:", salaEstudio)
+    })
 
-    let newsalaEstudio = {
-        id:SalaValidation.data.id,
-        Tiempo:SalaValidation.data.Tiempo,
-        Ubicacion:SalaValidation.data.Ubicacion,
 
-    }
-    salaEstudio.push(newsalaEstudio)
-    res.status(201).send({"message":"Sala disponible", "sala":newsalaEstudio})
-})
 
-app.get('/', (req, res)=>{
-    res.send("Bienvenidos")
-})
-
-app.delete('/salaEstudio/:id', (req, res)=>{
-    const idToDelete = req.params.id;
-    let indexToDelete = salaEstudio.findIndex(sala=>sala.id==idToDelete)
-    let salaDeleted = salaEstudio.splice(indexToDelete, 1)
-    //console.log("user delete: ", userDeleted)
-    res.send("Se eliminó correctamente el usuario con id: " + salaDeleted[0].id)
-})
 
 app.put('/salaEstudio/:id',(req, res)=>{
     let index = salaEstudio.findIndex(sala => sala.id == req.params.id)
     let newsalaEstudio = {
-        id:SalaValidation.data.id,
-        Tiempo:SalaValidation.data.Tiempo,
-        Ubicacion:SalaValidation.data.Ubicacion,
+        id:req.body.id,
+        Tiempo:req.body.Tiempo,
+        Ubicacion:req.body.Ubicacion,
     }
     salaEstudio[index]=newsalaEstudio
     res.send("usuario reemplazado " + newsalaEstudio )
 })
 
-app.patch('/salaEstudio/:id', (req, res)=>{
+
+
+
+//////la reserva
+
+
+app.get('/Reserva', (req, res)=>{
+    res.send("Reserva:", Reserva)
+})
+
+
+
+
+/* app.patch('/salaEstudio/:id', (req, res)=>{
     let index = salaEstudio.findIndex(user => sala.id == req.params.id)
 
-    /* A pie 🦶*/
-    //users[index].name = req.body.name || users[index].name
-    //users[index].last = req.body.last || users[index].last
-    //users[index].age = req.body.age || users[index].age
-    //users[index].email = req.body.email || users[index].email
-
-    /* Para generalizarlo ⭐*/
     if (index !== -1) {
         // Obtén las claves del cuerpo de la solicitud
         const requestKeys = Object.keys(req.body);
@@ -149,10 +143,8 @@ app.patch('/salaEstudio/:id', (req, res)=>{
 app.use("", (req, res)=>{
     res.status(404).send("No encontramos el recurso solicitado")
 })
+ */
 
-app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
-})
 
 
 
