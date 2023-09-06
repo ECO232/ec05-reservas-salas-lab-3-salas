@@ -10,7 +10,7 @@ app.use(cors())
 
 const {validateSala} = require('./schemas/Sala')
 
-const {validateReserva} = require('./schemas/Sala')
+const {validateReserva} = require('./schemas/Reserva')
 const {validateUser} = require('./schemas/user')
 
 let Reserva = []
@@ -96,7 +96,7 @@ user.push({
     })
 
 
-
+//ls para ver que hay en el proyecto, cd para cambiar de carpeta.
 
 app.put('/salaEstudio/:id',(req, res)=>{
     let index = salaEstudio.findIndex(sala => sala.id == req.params.id)
